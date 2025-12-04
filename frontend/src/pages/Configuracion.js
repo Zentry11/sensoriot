@@ -11,7 +11,7 @@ export default function Configuracion() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Base URL dinámica (usa la IP local o la variable del entorno)
+  
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
   const [userData, setUserData] = useState({
@@ -23,7 +23,7 @@ export default function Configuracion() {
     confirmPassword: "",
   });
 
-  // 🧩 Cargar datos del usuario al montar
+  //  Cargar datos del usuario al montar
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -50,7 +50,7 @@ export default function Configuracion() {
     if (usuario?.id) fetchUser();
   }, [usuario?.id, API_URL]);
 
-  // 📱 Detectar si es móvil
+  //  Detectar si es móvil
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
@@ -69,7 +69,7 @@ export default function Configuracion() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 🔐 Cerrar sesión
+  //  Cerrar sesión
   const handleLogout = () => {
     // Limpiar el estado local antes de cerrar sesión
     setUserData({
@@ -93,7 +93,7 @@ export default function Configuracion() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // 🧭 Cambios de input
+  //  Cambios de input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserData((prev) => ({
@@ -102,7 +102,7 @@ export default function Configuracion() {
     }));
   };
 
-  // 💾 Guardar cambios
+  //  Guardar cambios
   const handleSaveSettings = async (e) => {
     e.preventDefault();
 
@@ -170,7 +170,7 @@ export default function Configuracion() {
       {/* Overlay para móviles */}
       {sidebarOpen && isMobile && <SidebarOverlay />}
 
-      {/* Sidebar - Mismo diseño verde */}
+      {/* Sidebar  */}
       <div 
         className={`
           fixed md:relative z-50

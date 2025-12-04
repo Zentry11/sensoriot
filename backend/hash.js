@@ -1,6 +1,10 @@
 import bcrypt from "bcryptjs";
 
-const password = "admin1234"; // contraseña deseada
+// ============================================
+//  CREAR HASH PARA CONTRASEÑAS
+// ============================================
+
+const password = "admin1234"; // contrasña
 const salt = bcrypt.genSaltSync(10);
 const hash = bcrypt.hashSync(password, salt);
 

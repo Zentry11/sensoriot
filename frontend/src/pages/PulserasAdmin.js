@@ -44,7 +44,7 @@ export default function PulserasAdmin() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 🆕 Registrar nueva pulsera con validación
+  //  Registrar nueva pulsera con validación
   const registrarPulsera = async (e) => {
     e.preventDefault();
     if (!nuevaPulsera.codigo.trim() || !nuevaPulsera.token.trim()) {
@@ -64,13 +64,13 @@ export default function PulserasAdmin() {
     }
   };
 
-  // ✏️ Iniciar edición
+  //  Iniciar edición
   const iniciarEdicion = (pulsera) => {
     setEditando(pulsera.id);
     setPulseraEditada({ ...pulsera });
   };
 
-  // 💾 Guardar cambios
+  //  Guardar cambios
   const guardarEdicion = async (id) => {
     if (!pulseraEditada.codigo.trim() || !pulseraEditada.token.trim()) {
       toast.warn("⚠️ Código y token no pueden estar vacíos");
@@ -95,7 +95,7 @@ export default function PulserasAdmin() {
     }
   };
 
-  // 🗑️ Eliminar pulsera
+  //  Eliminar pulsera
   const eliminarPulsera = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta pulsera?")) return;
     try {
@@ -194,7 +194,7 @@ export default function PulserasAdmin() {
 
         <div className="p-4 md:p-8 min-h-screen bg-emerald-50">
           <div className="max-w-6xl mx-auto space-y-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6">Gestión de Pulseras</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-6"> 📱Gestión de Pulseras</h1>
 
             {/* 📋 Tabla de pulseras */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -317,7 +317,7 @@ export default function PulserasAdmin() {
               </div>
             </div>
 
-            {/* 🆕 Registrar nueva pulsera */}
+            {/*  Registrar nueva pulsera */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 ➕ Registrar Nueva Pulsera

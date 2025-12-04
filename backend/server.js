@@ -17,102 +17,50 @@ import twilio from "twilio";
 // ======================
 dotenv.config();
 const app = express();
-
-// ======================
-// 🔐 CONFIGURACIÓN CORS PARA PRODUCCIÓN
-// ======================
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Lista de orígenes permitidos
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://sensoriot.onrender.com',
-      'https://sensoriot-frontend.onrender.com',
-      'https://sensoriot-backend.onrender.com',
-      process.env.FRONTEND_URL // Variable de entorno en Render
-    ];
-    
-    // Permitir peticiones sin origen (como Postman o servidor a servidor)
-    if (!origin) {
-      return callback(null, true);
-    }
-    
-    // Verificar si el origen está en la lista permitida
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log('❌ Origen bloqueado por CORS:', origin);
-      callback(new Error('No permitido por CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Accept',
-    'Origin'
-  ],
-  exposedHeaders: ['Content-Length', 'Authorization'],
-  maxAge: 86400 // 24 horas
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Habilitar pre-flight para todas las rutas
-
+app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
-// ======================
-// 🚀 INICIALIZAR TWILIO
-// ======================
 const client = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
 
 // ======================
-// 🔍 RUTA DE PRUEBA/HEALTH CHECK
+// 🚀 SERVIDOR
 // ======================
-app.get("/", (req, res) => {
-  res.json({ 
-    message: "🚀 API SensorIoT funcionando", 
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({ 
-    status: "healthy", 
-    service: "sensoriot-backend",
-    time: new Date().toISOString()
-  });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
 
 // ======================
-// 🔐 RUTAS DE AUTENTICACIÓN
+// 🔐 AUTENTICACIÓN
 // ======================
 app.use("/api/auth", authRoutes);
 
 // ======================
-// 📡 RUTA PARA DATOS DEL ESP32
+// 🧠 CONEXIÓN MYSQL
 // ======================
+db.getConnection()
+  .then(() => console.log("✅ Conexión MySQL lista"))
+  .catch((err) => console.error("❌ Error en conexión MySQL:", err));
+
+// ====================================================================
+// 📡 RECIBIR DATOS DEL ESP32 + ENVIAR WHATSAPP SOLO EN CAÍDA REAL
+// ====================================================================
 app.post("/api/sensor/data", async (req, res) => {
   try {
     console.log("📩 Datos recibidos del ESP32:", req.body);
-    const { token, mensaje, temperatura } = req.body;
+
+    // AHORA RECIBE TAMBIÉN ax, ay, az, gx, gy, gz
+    const { token, mensaje, temperatura, ax, ay, az, gx, gy, gz } = req.body;
 
     if (!token || !mensaje) {
       return res.status(400).json({ error: "Faltan token o mensaje" });
     }
 
-    // ----------------------------------------------------------
     // 1️⃣ Buscar o registrar pulsera
-    // ----------------------------------------------------------
     const [pulseras] = await db.query(
       "SELECT id FROM pulseras WHERE token = ?",
       [token]
@@ -128,21 +76,32 @@ app.post("/api/sensor/data", async (req, res) => {
         [token, token]
       );
       pulseraId = result.insertId;
-      console.log(`🆕 Nueva pulsera registrada: ${token}`);
     }
 
-    // ----------------------------------------------------------
-    // 2️⃣ Guardar alerta
-    // ----------------------------------------------------------
+    // 2️⃣ Guardar alerta (con sensores)
     await db.query(
-      "INSERT INTO alertas (pulsera_id, mensaje, temperatura, fecha) VALUES (?, ?, ?, NOW())",
-      [pulseraId, mensaje, temperatura || null]
+      `INSERT INTO alertas 
+       (pulsera_id, mensaje, temperatura, ax, ay, az, gx, gy, gz, fecha) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+      [
+        pulseraId,
+        mensaje,
+        temperatura || null,
+        ax || null,
+        ay || null,
+        az || null,
+        gx || null,
+        gy || null,
+        gz || null
+      ]
     );
 
     console.log(`✅ Alerta guardada para ${token}: ${mensaje}`);
 
     // ----------------------------------------------------------
     // 3️⃣ Detectar si ES una caída real
+    // 🚫 No detectar "brusco"
+    // ✔ Solo detectar cuando el ESP32 diga "caída detectada"
     // ----------------------------------------------------------
     const esCaida =
       mensaje.toLowerCase().includes("caída detectada") ||
@@ -152,7 +111,7 @@ app.post("/api/sensor/data", async (req, res) => {
       console.log("⚠️ Se detectó una caída → enviando WhatsApp...");
 
       // ----------------------------------------------------------
-      // 4️⃣ OBTENER USUARIO Y NOMBRE DE PULSERA
+      // 4️⃣ OBTENER USUARIO Y NOMBRE DE PULSERA DESDE MONITOREO
       // ----------------------------------------------------------
       const [monitoreo] = await db.query(
         "SELECT usuario_id, nombre_pulsera FROM monitoreo WHERE token = ? LIMIT 1",
@@ -200,9 +159,9 @@ app.post("/api/sensor/data", async (req, res) => {
   }
 });
 
-// ======================
-// 🔍 CONSULTAR ALERTAS POR TOKEN
-// ======================
+// ====================================================================
+// 🔍 CONSULTAR ALERTAS POR TOKEN (ACTUALIZADO CON SENSORES)
+// ====================================================================
 app.get("/api/sensor/alertas/:token", async (req, res) => {
   try {
     const { token } = req.params;
@@ -219,7 +178,7 @@ app.get("/api/sensor/alertas/:token", async (req, res) => {
     const pulsera = pulseraRows[0];
 
     const [alertas] = await db.query(
-      `SELECT id AS id, mensaje, temperatura, fecha 
+      `SELECT id AS id, mensaje, temperatura, ax, ay, az, gx, gy, gz, fecha 
        FROM alertas 
        WHERE pulsera_id = ? 
        ORDER BY fecha DESC`,
@@ -238,6 +197,24 @@ app.get("/api/sensor/alertas/:token", async (req, res) => {
       }))
       .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
+    // Obtener los últimos 10 registros con datos de sensores
+    const historialSensores = alertas
+      .filter((a) => a.ax !== null && a.ay !== null && a.az !== null)
+      .slice(0, 10)
+      .map((a) => ({
+        fecha: a.fecha,
+        hora: new Date(a.fecha).toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        ax: parseFloat(a.ax),
+        ay: parseFloat(a.ay),
+        az: parseFloat(a.az),
+        gx: parseFloat(a.gx) || 0,
+        gy: parseFloat(a.gy) || 0,
+        gz: parseFloat(a.gz) || 0
+      }));
+
     res.json({
       codigo: pulsera.codigo,
       token: pulsera.token,
@@ -246,8 +223,15 @@ app.get("/api/sensor/alertas/:token", async (req, res) => {
         id: a.id,
         mensaje: a.mensaje,
         fecha: a.fecha,
+        ax: a.ax,
+        ay: a.ay,
+        az: a.az,
+        gx: a.gx,
+        gy: a.gy,
+        gz: a.gz
       })),
       historialTemperatura,
+      historialSensores // Nuevo campo con datos de sensores
     });
 
   } catch (error) {
@@ -256,18 +240,9 @@ app.get("/api/sensor/alertas/:token", async (req, res) => {
   }
 });
 
-// ======================
-// 📌 OTRAS RUTAS
-// ======================
+// ====================================================================
+// 📌 Rutas extra
+// ====================================================================
 app.use("/api", usuariosRoutes);
 app.use("/api/monitoreo", monitoreoRoutes);
 app.use("/api/admin", adminRoutes);
-
-// ======================
-// 🚀 INICIAR SERVIDOR
-// ======================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
-  console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-});

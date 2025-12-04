@@ -4,7 +4,7 @@ import db from "../db.js";
 
 const router = express.Router();
 
-// 📩 Ruta para recibir datos del ESP32
+//  Ruta para recibir datos del ESP32
 router.post("/data", async (req, res) => {
   try {
     const { token, mensaje } = req.body;
@@ -30,18 +30,18 @@ router.post("/data", async (req, res) => {
       [pulsera_id, mensaje, incremento]
     );
 
-    // 🧩 MODIFICADO: emitir evento en tiempo real
+    //  MODIFICADO: emitir evento en tiempo real
     const io = req.app.get("io");
     io.emit("nuevaAlerta", { token, mensaje });
 
     res.json({ success: true, message: "Dato recibido correctamente" });
   } catch (error) {
-    console.error("❌ Error en /data:", error);
+    console.error(" Error en /data:", error);
     res.status(500).json({ error: "Error al procesar datos del sensor" });
   }
 });
 
-// 📤 Ruta para obtener alertas por código de pulsera
+//  Ruta para obtener alertas por código de pulsera
 router.get("/alertas/:codigo", async (req, res) => {
   try {
     const { codigo } = req.params;
@@ -72,7 +72,7 @@ router.get("/alertas/:codigo", async (req, res) => {
       historial: alertas,
     });
   } catch (error) {
-    console.error("❌ Error en /alertas:", error);
+    console.error(" Error en /alertas:", error);
     res.status(500).json({ error: "Error al obtener alertas" });
   }
 });

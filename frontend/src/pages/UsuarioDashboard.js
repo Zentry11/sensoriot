@@ -32,7 +32,7 @@ export default function UsuarioDashboard() {
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
   const errorShownRef = useRef(false);
 
-  // 📦 Obtener pulseras vinculadas
+  //  Obtener pulseras vinculadas
   const obtenerPulseras = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/monitoreo/mis-pulseras`, {
@@ -45,7 +45,7 @@ export default function UsuarioDashboard() {
     }
   }, [API_URL, token]);
 
-  // 📱 Detectar si es móvil
+  //  Detectar si es móvil
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
@@ -57,7 +57,7 @@ export default function UsuarioDashboard() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 🔐 Verificar sesión y cargar pulseras
+  //  Verificar sesión y cargar pulseras
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -66,7 +66,7 @@ export default function UsuarioDashboard() {
     }
   }, [token, navigate, obtenerPulseras]);
 
-  // 🔍 Buscar datos del sensor
+  //  Buscar datos del sensor
   const buscarDatos = useCallback(
     async (tokenPulsera) => {
       if (!tokenPulsera) return;
@@ -75,7 +75,7 @@ export default function UsuarioDashboard() {
         const res = await axios.get(`${API_URL}/api/sensor/alertas/${tokenPulsera}`);
         if (!res.data || Object.keys(res.data).length === 0) {
           if (!errorShownRef.current) {
-            toast.error("❌ No se encontraron datos para esta pulsera");
+            toast.error(" No se encontraron datos para esta pulsera");
             errorShownRef.current = true;
           }
           setDatos(null);
@@ -86,7 +86,7 @@ export default function UsuarioDashboard() {
       } catch (err) {
         console.error(err);
         if (!errorShownRef.current) {
-          toast.error("❌ No se encontraron datos para esta pulsera");
+          toast.error(" No se encontraron datos para esta pulsera");
           errorShownRef.current = true;
         }
         setDatos(null);
@@ -95,7 +95,7 @@ export default function UsuarioDashboard() {
     [API_URL]
   );
 
-  // 🔁 Actualizar datos cada 30 segundos
+  //  Actualizar datos cada 30 segundos
   useEffect(() => {
     if (!codigo) return;
     buscarDatos(codigo);
@@ -103,14 +103,14 @@ export default function UsuarioDashboard() {
     return () => clearInterval(intervalo);
   }, [codigo, buscarDatos]);
 
-  // 💾 Guardar la pulsera seleccionada en localStorage
+  //  Guardar la pulsera seleccionada en localStorage
   useEffect(() => {
     if (codigo) {
       localStorage.setItem("pulseraSeleccionada", codigo);
     }
   }, [codigo]);
 
-  // 🔄 Función para exportar a Excel
+  //  Función para exportar a Excel (COMPLETA CON SENSORES)
   const exportToExcel = () => {
     if (!datos) {
       toast.error("No hay datos para exportar");
@@ -131,13 +131,17 @@ export default function UsuarioDashboard() {
         ["", ""],
         ["FECHA DE EXPORTACIÓN", new Date().toLocaleString('es-ES')],
         ["USUARIO", `${usuario?.nombres} ${usuario?.apellidos}`],
-        ["PULSERA SELECCIONADA", codigo]
+        ["PULSERA SELECCIONADA", codigo],
+        ["", ""],
+        ["DETALLES SENSORES"],
+        ["Total registros con sensores", datos?.historial?.filter(a => a.ax !== null).length || "0"],
+        ["Última lectura", datos?.historial?.[0]?.fecha ? new Date(datos.historial[0].fecha).toLocaleString('es-ES') : "N/A"]
       ];
       
       const statsSheet = XLSX.utils.aoa_to_sheet(statsSheetData);
       XLSX.utils.book_append_sheet(wb, statsSheet, "Resumen");
 
-      // Hoja 2: Historial de alertas
+      // Hoja 2: Historial de alertas COMPLETO con sensores
       if (datos.historial && datos.historial.length > 0) {
         const alertasData = datos.historial.map(alerta => {
           let tipo = "General";
@@ -152,7 +156,21 @@ export default function UsuarioDashboard() {
             "Tipo": tipo,
             "Mensaje": alerta.mensaje,
             "Fecha": new Date(alerta.fecha).toLocaleString('es-ES'),
-            "Fecha Original": alerta.fecha
+            "Fecha Original": alerta.fecha,
+            "Temperatura (°C)": alerta.temperatura || "N/A",
+            "Aceleración X (m/s²)": alerta.ax ? parseFloat(alerta.ax).toFixed(4) : "N/A",
+            "Aceleración Y (m/s²)": alerta.ay ? parseFloat(alerta.ay).toFixed(4) : "N/A",
+            "Aceleración Z (m/s²)": alerta.az ? parseFloat(alerta.az).toFixed(4) : "N/A",
+            "Giroscopio X (°/s)": alerta.gx ? parseFloat(alerta.gx).toFixed(4) : "N/A",
+            "Giroscopio Y (°/s)": alerta.gy ? parseFloat(alerta.gy).toFixed(4) : "N/A",
+            "Giroscopio Z (°/s)": alerta.gz ? parseFloat(alerta.gz).toFixed(4) : "N/A",
+            "Magnitud Aceleración": alerta.ax && alerta.ay && alerta.az 
+              ? Math.sqrt(
+                  Math.pow(parseFloat(alerta.ax), 2) + 
+                  Math.pow(parseFloat(alerta.ay), 2) + 
+                  Math.pow(parseFloat(alerta.az), 2)
+                ).toFixed(4) 
+              : "N/A"
           };
         });
         
@@ -165,15 +183,41 @@ export default function UsuarioDashboard() {
         const tempData = datos.historialTemperatura.map(item => ({
           "Temperatura (°C)": item.temperatura,
           "Fecha": new Date(item.fecha).toLocaleString('es-ES'),
-          "Fecha Original": item.fecha,
-          "ID Sensor": item.id_sensor || "N/A"
+          "Fecha Original": item.fecha
         }));
         
         const tempSheet = XLSX.utils.json_to_sheet(tempData);
         XLSX.utils.book_append_sheet(wb, tempSheet, "Historial Temperatura");
       }
 
-      // Hoja 4: Pulseras registradas
+      // Hoja 4: Últimos registros de sensores (para análisis)
+      if (datos.historialSensores && datos.historialSensores.length > 0) {
+        const sensoresData = datos.historialSensores.map(item => ({
+          "Fecha": new Date(item.fecha).toLocaleString('es-ES'),
+          "Hora": item.hora,
+          "Aceleración X (m/s²)": parseFloat(item.ax).toFixed(4),
+          "Aceleración Y (m/s²)": parseFloat(item.ay).toFixed(4),
+          "Aceleración Z (m/s²)": parseFloat(item.az).toFixed(4),
+          "Giroscopio X (°/s)": parseFloat(item.gx).toFixed(4),
+          "Giroscopio Y (°/s)": parseFloat(item.gy).toFixed(4),
+          "Giroscopio Z (°/s)": parseFloat(item.gz).toFixed(4),
+          "Magnitud Total Aceleración": Math.sqrt(
+            Math.pow(item.ax, 2) + 
+            Math.pow(item.ay, 2) + 
+            Math.pow(item.az, 2)
+          ).toFixed(4),
+          "Magnitud Total Giroscopio": Math.sqrt(
+            Math.pow(item.gx, 2) + 
+            Math.pow(item.gy, 2) + 
+            Math.pow(item.gz, 2)
+          ).toFixed(4)
+        }));
+        
+        const sensoresSheet = XLSX.utils.json_to_sheet(sensoresData);
+        XLSX.utils.book_append_sheet(wb, sensoresSheet, "Datos Sensores");
+      }
+
+      // Hoja 5: Pulseras registradas
       if (pulseras.length > 0) {
         const pulserasData = pulseras.map(p => ({
           "ID": p.id,
@@ -186,13 +230,59 @@ export default function UsuarioDashboard() {
         XLSX.utils.book_append_sheet(wb, pulserasSheet, "Pulseras Registradas");
       }
 
+      // Hoja 6: Estadísticas de sensores (solo si hay datos)
+      if (datos.historial && datos.historial.length > 0) {
+        const registrosConSensores = datos.historial.filter(a => a.ax !== null);
+        
+        if (registrosConSensores.length > 0) {
+          const valoresAX = registrosConSensores.map(a => parseFloat(a.ax));
+          const valoresAY = registrosConSensores.map(a => parseFloat(a.ay));
+          const valoresAZ = registrosConSensores.map(a => parseFloat(a.az));
+          
+          const statsSensoresData = [
+            ["ESTADÍSTICAS DE SENSORES"],
+            ["", ""],
+            ["Total registros con sensores", registrosConSensores.length],
+            ["", ""],
+            ["ACELERÓMETRO (m/s²)"],
+            ["Eje", "Mínimo", "Máximo", "Promedio", "Desviación Estándar"],
+            [
+              "X",
+              Math.min(...valoresAX).toFixed(4),
+              Math.max(...valoresAX).toFixed(4),
+              (valoresAX.reduce((a, b) => a + b, 0) / valoresAX.length).toFixed(4),
+              Math.sqrt(valoresAX.map(x => Math.pow(x - valoresAX.reduce((a, b) => a + b, 0) / valoresAX.length, 2)).reduce((a, b) => a + b, 0) / valoresAX.length).toFixed(4)
+            ],
+            [
+              "Y",
+              Math.min(...valoresAY).toFixed(4),
+              Math.max(...valoresAY).toFixed(4),
+              (valoresAY.reduce((a, b) => a + b, 0) / valoresAY.length).toFixed(4),
+              Math.sqrt(valoresAY.map(y => Math.pow(y - valoresAY.reduce((a, b) => a + b, 0) / valoresAY.length, 2)).reduce((a, b) => a + b, 0) / valoresAY.length).toFixed(4)
+            ],
+            [
+              "Z",
+              Math.min(...valoresAZ).toFixed(4),
+              Math.max(...valoresAZ).toFixed(4),
+              (valoresAZ.reduce((a, b) => a + b, 0) / valoresAZ.length).toFixed(4),
+              Math.sqrt(valoresAZ.map(z => Math.pow(z - valoresAZ.reduce((a, b) => a + b, 0) / valoresAZ.length, 2)).reduce((a, b) => a + b, 0) / valoresAZ.length).toFixed(4)
+            ],
+            ["", ""],
+            ["NOTA:", "Los valores de giroscopio no se incluyen en estadísticas por ser opcionales"]
+          ];
+          
+          const statsSensoresSheet = XLSX.utils.aoa_to_sheet(statsSensoresData);
+          XLSX.utils.book_append_sheet(wb, statsSensoresSheet, "Estadísticas Sensores");
+        }
+      }
+
       // Generar nombre del archivo
-      const fileName = `reporte_${codigo || 'pulsera'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const fileName = `reporte_sensores_${codigo || 'pulsera'}_${new Date().toISOString().split('T')[0]}.xlsx`;
       
       // Descargar archivo
       XLSX.writeFile(wb, fileName);
       
-      toast.success("✅ Reporte exportado exitosamente");
+      toast.success("✅ Reporte exportado exitosamente con datos de sensores");
       
     } catch (error) {
       console.error("Error al exportar a Excel:", error);
@@ -218,7 +308,7 @@ export default function UsuarioDashboard() {
     { name: "Configuracion", path: "/configuracion" },
   ];
 
-  // 📊 Obtener últimos 10 registros de temperatura
+  //  Obtener últimos 10 registros de temperatura
   const ultimasTemperaturas = datos?.historialTemperatura 
     ? datos.historialTemperatura.slice(-10).map(item => ({
         ...item,
@@ -229,7 +319,10 @@ export default function UsuarioDashboard() {
       }))
     : [];
 
-  // 📈 Funciones para nuevas gráficas
+  //  Obtener datos de sensores para gráficas
+  const datosSensores = datos?.historialSensores || [];
+
+  //  Funciones para nuevas gráficas
   const obtenerFrecuenciaAlertas = () => {
     if (!datos?.historial) return [];
     
@@ -291,12 +384,12 @@ export default function UsuarioDashboard() {
     return actividad;
   };
 
-  // 📊 Datos para gráficas
+  //  Datos para gráficas
   const frecuenciaAlertas = obtenerFrecuenciaAlertas();
   const movimientosPorHora = obtenerMovimientosPorHora();
   const actividadDiaria = obtenerActividadDiaria();
 
-  // 📊 Estadísticas
+  //  Estadísticas
   const statsData = [
     {
       title: "MOVIMIENTOS BRUSCOS",
@@ -335,7 +428,7 @@ export default function UsuarioDashboard() {
       {/* Overlay móvil */}
       {sidebarOpen && isMobile && <SidebarOverlay />}
 
-      {/* Sidebar - Mismo diseño que PulserasAdmin */}
+      {/* Sidebar */}
       <div
         className={`fixed md:relative z-50 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -409,7 +502,7 @@ export default function UsuarioDashboard() {
                 </p>
               </div>
 
-              {/* 🔍 Selector de pulseras y botón de exportación */}
+              {/*  Selector de pulseras y botón de exportación */}
               <div className="flex flex-col md:flex-row gap-2">
                 <select
                   value={codigo}
@@ -628,6 +721,119 @@ export default function UsuarioDashboard() {
               </div>
             </div>
 
+            {/* Gráficas - Tercera Fila (Nuevas gráficas de sensores) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+              {/* Acelerómetro */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  📊 Acelerómetro (ax, ay, az) - Últimos 10 Registros
+                </h3>
+                {datosSensores.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={datosSensores}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis 
+                        dataKey="hora"
+                        tick={{ fill: "#4B5563", fontSize: 12 }}
+                      />
+                      <YAxis 
+                        tick={{ fill: "#4B5563", fontSize: 12 }}
+                        label={{ value: 'Aceleración (m/s²)', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => [`${value} m/s²`, name]}
+                        labelFormatter={(label) => `Hora: ${label}`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="ax" 
+                        name="Aceleración X" 
+                        stroke="#EF4444" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="ay" 
+                        name="Aceleración Y" 
+                        stroke="#10B981" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="az" 
+                        name="Aceleración Z" 
+                        stroke="#3B82F6" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    No hay datos del acelerómetro para esta pulsera
+                  </div>
+                )}
+              </div>
+
+              {/* Giroscopio */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  📈 Giroscopio (gx, gy, gz) - Últimos 10 Registros
+                </h3>
+                {datosSensores.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={datosSensores}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis 
+                        dataKey="hora"
+                        tick={{ fill: "#4B5563", fontSize: 12 }}
+                      />
+                      <YAxis 
+                        tick={{ fill: "#4B5563", fontSize: 12 }}
+                        label={{ value: 'Velocidad Angular (°/s)', angle: -90, position: 'insideLeft' }}
+                      />
+                      <Tooltip 
+                        formatter={(value, name) => [`${value} °/s`, name]}
+                        labelFormatter={(label) => `Hora: ${label}`}
+                      />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="gx" 
+                        name="Giroscopio X" 
+                        stroke="#8B5CF6" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="gy" 
+                        name="Giroscopio Y" 
+                        stroke="#F59E0B" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="gz" 
+                        name="Giroscopio Z" 
+                        stroke="#EC4899" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    No hay datos del giroscopio para esta pulsera
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Historial de alertas */}
             {datos && (
               <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
@@ -649,6 +855,9 @@ export default function UsuarioDashboard() {
                         </th>
                         <th className="p-3 text-left text-sm font-semibold text-gray-700">
                           Fecha y Hora
+                        </th>
+                        <th className="p-3 text-left text-sm font-semibold text-gray-700">
+                          Sensores
                         </th>
                         <th className="p-3 text-left text-sm font-semibold text-gray-700">
                           ID
@@ -683,6 +892,16 @@ export default function UsuarioDashboard() {
                               icono = "🌡️";
                             }
 
+                            // Mostrar datos de sensores si existen
+                            const tieneSensores = alerta.ax !== null || alerta.ay !== null || alerta.az !== null;
+                            const datosSensor = tieneSensores ? (
+                              <div className="text-xs text-gray-500">
+                                {alerta.ax !== null && <div>ax: {parseFloat(alerta.ax).toFixed(2)}</div>}
+                                {alerta.ay !== null && <div>ay: {parseFloat(alerta.ay).toFixed(2)}</div>}
+                                {alerta.az !== null && <div>az: {parseFloat(alerta.az).toFixed(2)}</div>}
+                              </div>
+                            ) : "N/A";
+
                             return (
                               <tr
                                 key={alerta.id}
@@ -708,6 +927,9 @@ export default function UsuarioDashboard() {
                                     minute: '2-digit'
                                   })}
                                 </td>
+                                <td className="p-3 text-sm text-gray-500">
+                                  {datosSensor}
+                                </td>
                                 <td className="p-3 text-sm text-gray-400">
                                   #{alerta.id}
                                 </td>
@@ -716,7 +938,7 @@ export default function UsuarioDashboard() {
                           })
                       ) : (
                         <tr>
-                          <td colSpan="4" className="p-6 text-center text-gray-500">
+                          <td colSpan="5" className="p-6 text-center text-gray-500">
                             <div className="flex flex-col items-center justify-center py-4">
                               <span className="text-4xl mb-2">📭</span>
                               <p className="text-gray-600">No hay alertas registradas</p>

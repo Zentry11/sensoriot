@@ -4,7 +4,9 @@ import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// 🔒 Middleware para verificar el token JWT
+// ============================================
+//  MIDDLEWARE PARA VERIFICAR EL TOKEN JWT
+// ============================================
 function verificarToken(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Token no proporcionado" });
@@ -18,7 +20,7 @@ function verificarToken(req, res, next) {
   }
 }
 
-// 🆕 Registrar un nuevo token (pulsera) vinculado al usuario
+// Registrar un nuevo token (pulsera) vinculado al usuario
 router.post("/registrar", verificarToken, async (req, res) => {
   try {
     const { token, nombre_pulsera } = req.body;
@@ -42,7 +44,7 @@ router.post("/registrar", verificarToken, async (req, res) => {
   }
 });
 
-// 📋 Obtener todas las pulseras vinculadas al usuario
+// Obtener todas las pulseras vinculadas al usuario
 router.get("/mis-pulseras", verificarToken, async (req, res) => {
   try {
     const usuarioId = req.usuario.id;
@@ -59,7 +61,7 @@ router.get("/mis-pulseras", verificarToken, async (req, res) => {
   }
 });
 
-// ❌ Eliminar una pulsera vinculada
+// Eliminar una pulsera vinculada
 router.delete("/:id", verificarToken, async (req, res) => {
   try {
     const usuarioId = req.usuario.id;

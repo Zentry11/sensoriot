@@ -3,7 +3,7 @@ import db from "../db.js";
 
 const router = express.Router();
 
-// 📍 Asociar o monitorear una pulsera
+//  Asociar o monitorear una pulsera
 app.post("/api/pulseras/asociar", async (req, res) => {
   const { codigo, usuario_id } = req.body;
 
@@ -12,7 +12,7 @@ app.post("/api/pulseras/asociar", async (req, res) => {
   }
 
   try {
-    // 1️⃣ Verificamos si la pulsera existe
+    // 1️ Verificamos si la pulsera existe
     const [pulseraRows] = await db.query(
       "SELECT * FROM pulseras WHERE codigo = ?",
       [codigo]
@@ -24,7 +24,7 @@ app.post("/api/pulseras/asociar", async (req, res) => {
 
     const pulsera = pulseraRows[0];
 
-    // 2️⃣ Si no tiene dueño, la asignamos al usuario
+    // 2️ Si no tiene dueño, la asignamos al usuario
     if (!pulsera.usuario_id) {
       await db.query(
         "UPDATE pulseras SET usuario_id = ?, estado = 'Activa' WHERE id_pulsera = ?",
@@ -34,7 +34,7 @@ app.post("/api/pulseras/asociar", async (req, res) => {
       return res.json({ message: "Pulsera asignada correctamente" });
     }
 
-    // 3️⃣ Si la pulsera ya tiene dueño y no es el mismo usuario, lo agregamos como monitor
+    // 3️ Si la pulsera ya tiene dueño y no es el mismo usuario, lo agregamos como monitor
     if (pulsera.usuario_id !== usuario_id) {
       // Verificamos si ya la está monitoreando
       const [monitoreoExistente] = await db.query(
@@ -59,7 +59,7 @@ app.post("/api/pulseras/asociar", async (req, res) => {
       });
     }
 
-    // 4️⃣ Si el usuario ya es dueño
+    // 4️ Si el usuario ya es dueño
     return res.status(400).json({
       message: "La pulsera ya está asignada a este usuario",
     });

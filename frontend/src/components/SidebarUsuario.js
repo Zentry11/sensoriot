@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 export default function SidebarUsuario({ sidebarOpen, toggleSidebar, isMobile }) {
   const navigate = useNavigate();
 
-  // 🔐 Cerrar sesión
+  //  Cerrar sesión
   const handleLogout = () => {
     // Borrar datos guardados
     localStorage.removeItem("usuario");
     localStorage.removeItem("token");
-    localStorage.removeItem("pulseraSeleccionada"); // ✅ limpia la selección de pulsera
+    localStorage.removeItem("pulseraSeleccionada"); //  limpia la selección de pulsera
 
     // Redirigir al login
     navigate("/login");

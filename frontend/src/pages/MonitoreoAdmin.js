@@ -22,7 +22,7 @@ export default function MonitoreoAdmin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // 🔄 Obtener datos iniciales
+  //  Obtener datos iniciales
   const obtenerDatos = useCallback(async () => {
     try {
       const [monRes, usuRes, pulRes] = await Promise.all([
@@ -49,7 +49,7 @@ export default function MonitoreoAdmin() {
     obtenerDatos();
   }, [obtenerDatos]);
 
-  // 📱 Sidebar responsiva
+  //  Sidebar responsiva
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -61,7 +61,7 @@ export default function MonitoreoAdmin() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ➕ Registrar o editar monitoreo
+  //  Registrar o editar monitoreo
   const manejarSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -85,7 +85,7 @@ export default function MonitoreoAdmin() {
     }
   };
 
-  // 🗑️ Eliminar monitoreo
+  //  Eliminar monitoreo
   const eliminarMonitoreo = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este monitoreo?")) return;
     try {
@@ -189,10 +189,10 @@ export default function MonitoreoAdmin() {
         <div className="p-6 md:p-8 min-h-screen bg-emerald-50">
           <div className="max-w-6xl mx-auto space-y-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-6">
-              Gestión de Monitoreos
+              📈 Gestión de Monitoreos
             </h1>
 
-            {/* 📊 Tabla de monitoreos */}
+            {/*  Tabla de monitoreos */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 📄 Lista de Monitoreos
@@ -256,7 +256,7 @@ export default function MonitoreoAdmin() {
               </div>
             </div>
 
-            {/* ➕ Formulario */}
+            {/*  Formulario */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 {editando ? "✏️ Editar Monitoreo" : "➕ Registrar Nuevo Monitoreo"}

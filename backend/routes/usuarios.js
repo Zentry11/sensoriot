@@ -1,11 +1,13 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import pool from "../db.js"; // o tu ruta a db.js
+import pool from "../db.js"; 
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// ✅ Middleware para verificar el token
+// ============================================
+//  MIDDLEWARE PARA VERIFICAR EL TOKEN
+// ============================================
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: "Token no proporcionado" });
@@ -18,7 +20,7 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// ✅ Ruta: obtener usuario por ID
+//  Ruta: obtener usuario por ID
 router.get("/usuarios/:id", verifyToken, async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT id, nombres, apellidos, telefono, correo FROM usuarios WHERE id = ?", [req.params.id]);
@@ -30,7 +32,7 @@ router.get("/usuarios/:id", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Ruta: actualizar datos de usuario
+// Ruta: actualizar datos de usuario
 router.put("/usuarios/:id", verifyToken, async (req, res) => {
   try {
     const { nombres, apellidos, telefono, correo, password } = req.body;

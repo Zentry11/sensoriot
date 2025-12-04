@@ -7,7 +7,9 @@ import dotenv from "dotenv";
 dotenv.config();
 const router = express.Router();
 
-// Registro
+// ============================================
+//  RUTA DE REGISTRO
+// ===========================================
 router.post("/register", async (req, res) => {
   try {
     const { nombres, apellidos, telefono, correo, contraseña } = req.body;
@@ -29,7 +31,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login
+// ============================================
+//  RUTA DE LOGIN
+// ============================================
 router.post("/login", async (req, res) => {
   try {
     const { correo, contraseña } = req.body;

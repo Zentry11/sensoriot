@@ -11,6 +11,9 @@ const db = await mysql.createPool({
 
 export default db; */
 
+
+
+
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
 
@@ -40,4 +43,4 @@ pool.getConnection()
     console.error("❌ Error conectando a MySQL:", err.message);
   });
 
-export default pool;
+export default pool; 

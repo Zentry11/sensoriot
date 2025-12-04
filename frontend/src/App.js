@@ -66,7 +66,7 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import UsuarioDashboard from "./pages/UsuarioDashboard";
 import Configuracion from "./pages/Configuracion";
-import Settings from "./pages/Settings"; // ✅ Importamos la nueva página "Mis Pulseras"
+import Settings from "./pages/Settings"; 
 import PulserasAdmin from "./pages/PulserasAdmin";
 import UsuariosAdmin from "./pages/UsuariosAdmin";
 import MonitoreoAdmin from "./pages/MonitoreoAdmin";

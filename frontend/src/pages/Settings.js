@@ -17,7 +17,7 @@ export default function Settings() {
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
-  // 📱 Detectar si es móvil
+  //  Detectar si es móvil
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
@@ -29,7 +29,7 @@ export default function Settings() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // 📦 Obtener pulseras vinculadas
+  //  Obtener pulseras vinculadas
   const obtenerPulseras = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/monitoreo/mis-pulseras`, {
@@ -38,11 +38,11 @@ export default function Settings() {
       setPulseras(res.data);
     } catch (error) {
       console.error("Error al cargar pulseras:", error);
-      toast.error("⚠️ Error al cargar las pulseras vinculadas");
+      toast.error(" Error al cargar las pulseras vinculadas");
     }
   };
 
-  // 🔐 Verificar sesión y cargar pulseras
+  //  Verificar sesión y cargar pulseras
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -52,10 +52,10 @@ export default function Settings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // ➕ Registrar nueva pulsera
+  //  Registrar nueva pulsera
   const registrarPulsera = async () => {
     if (!nuevoToken.trim()) {
-      toast.warn("⚠️ Ingresa un token válido");
+      toast.warn(" Ingresa un token válido");
       return;
     }
 
@@ -66,17 +66,17 @@ export default function Settings() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      toast.success(res.data.mensaje || "✅ Pulsera registrada correctamente");
+      toast.success(res.data.mensaje || " Pulsera registrada correctamente");
       setNuevoToken("");
       setNombrePulsera("");
       obtenerPulseras();
     } catch (error) {
       console.error("Error al registrar:", error);
-      toast.error(error.response?.data?.error || "❌ Error al registrar la pulsera");
+      toast.error(error.response?.data?.error || "Error al registrar la pulsera");
     }
   };
 
-  // 🗑️ Eliminar pulsera
+  // Eliminar pulsera
   const eliminarPulsera = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta pulsera?")) return;
 
@@ -84,15 +84,15 @@ export default function Settings() {
       await axios.delete(`${API_URL}/api/monitoreo/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success("🗑️ Pulsera eliminada correctamente");
+      toast.success("Pulsera eliminada correctamente");
       obtenerPulseras();
     } catch (error) {
       console.error("Error al eliminar:", error);
-      toast.error("❌ No se pudo eliminar la pulsera");
+      toast.error(" No se pudo eliminar la pulsera");
     }
   };
 
-  // 🔐 Cerrar sesión
+  // Cerrar sesión
   const handleLogout = () => {
     localStorage.removeItem("usuario");
     localStorage.removeItem("token");
@@ -119,7 +119,7 @@ export default function Settings() {
       {/* Overlay móvil */}
       {sidebarOpen && isMobile && <SidebarOverlay />}
 
-      {/* Sidebar - Mismo diseño verde */}
+      {/* Sidebar*/}
       <div
         className={`fixed md:relative z-50 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -182,7 +182,7 @@ export default function Settings() {
         <div className="p-4 md:p-8 min-h-screen bg-emerald-50">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
-              Vincular Nueva Pulsera
+              ➕ Vincular Nueva Pulsera
             </h1>
 
             <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">

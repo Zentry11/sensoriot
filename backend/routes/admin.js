@@ -5,7 +5,9 @@ import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
-// ✅ Middleware para verificar token
+// ============================================
+//  MIDDLEWARE PARA VERIFICAR TOKEN
+// ============================================
 function verificarToken(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "Token no proporcionado" });
@@ -20,7 +22,7 @@ function verificarToken(req, res, next) {
 }
 
 // ============================================
-// 📊 RUTA DE ESTADÍSTICAS (ADMIN DASHBOARD)
+//  RUTA DE ESTADÍSTICAS (ADMIN DASHBOARD)
 // ============================================
 router.get("/estadisticas", verificarToken, async (req, res) => {
   try {
@@ -45,7 +47,9 @@ router.get("/estadisticas", verificarToken, async (req, res) => {
   }
 });
 
-// 📊 Pulseras activas vs inactivas
+// ============================================
+//  PULSERAS ACTIVAS VS INACTIVAS
+// ============================================
 router.get("/estadisticas/pulseras", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT estado, COUNT(*) AS total FROM pulseras GROUP BY estado");
@@ -56,7 +60,9 @@ router.get("/estadisticas/pulseras", verificarToken, async (req, res) => {
   }
 });
 
-// 📈 Monitoreos por día
+// ============================================
+//  MONITOREOS POR DIA
+// ============================================
 router.get("/estadisticas/monitoreos", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -73,7 +79,9 @@ router.get("/estadisticas/monitoreos", verificarToken, async (req, res) => {
   }
 });
 
-// 👤 Usuarios registrados por mes
+// ============================================
+//  USUARIOS REGISTRADOS POR MES
+// ============================================
 router.get("/estadisticas/usuarios", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -89,8 +97,9 @@ router.get("/estadisticas/usuarios", verificarToken, async (req, res) => {
   }
 });
 
-// 🚨 Alertas por tipo
-// 🚨 Alertas por tipo (usando mensaje como tipo legible)
+// ============================================
+//  ALERTAS POR TIPO
+// ============================================
 router.get("/estadisticas/alertas", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
@@ -111,11 +120,8 @@ router.get("/estadisticas/alertas", verificarToken, async (req, res) => {
   }
 });
 
-
-
-
 // ============================================
-// 📦 CRUD de Pulseras
+// CRUD DE PULSERAS
 // ============================================
 router.get("/pulseras", verificarToken, async (req, res) => {
   try {
@@ -178,10 +184,8 @@ router.delete("/pulseras/:id", verificarToken, async (req, res) => {
 });
 
 // ============================================
-// 👤 CRUD de Usuarios
+// 👤 CRUD DE USUARIOS
 // ============================================
-
-// Obtener todos los usuarios
 router.get("/usuarios", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -246,7 +250,7 @@ router.delete("/usuarios/:id", verificarToken, async (req, res) => {
 });
 
 /// ============================================
-// 📡 CRUD de Monitoreos
+//  CRUD DE MONITOREOS
 // ============================================
 router.get("/monitoreos", verificarToken, async (req, res) => {
   try {
@@ -270,7 +274,7 @@ router.get("/monitoreos", verificarToken, async (req, res) => {
   }
 });
 
-// 🔄 Obtener usuarios (para formulario)
+// Obtener usuarios (para formulario)
 router.get("/monitoreos/usuarios", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -283,7 +287,7 @@ router.get("/monitoreos/usuarios", verificarToken, async (req, res) => {
   }
 });
 
-// 🔄 Obtener tokens de pulseras (para formulario)
+// Obtener tokens de pulseras (para formulario)
 router.get("/monitoreos/pulseras", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -297,7 +301,7 @@ router.get("/monitoreos/pulseras", verificarToken, async (req, res) => {
 });
 
 
-// ➕ Crear nuevo monitoreo
+// Crear nuevo monitoreo
 router.post("/monitoreos", verificarToken, async (req, res) => {
   try {
     const { usuario_id, token, nombre_pulsera } = req.body;
@@ -317,7 +321,7 @@ router.post("/monitoreos", verificarToken, async (req, res) => {
   }
 });
 
-// ✏️ Editar monitoreo
+//  Editar monitoreo
 router.put("/monitoreos/:id", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -335,7 +339,7 @@ router.put("/monitoreos/:id", verificarToken, async (req, res) => {
   }
 });
 
-// 🗑️ Eliminar monitoreo
+// Eliminar monitoreo
 router.delete("/monitoreos/:id", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -352,7 +356,7 @@ router.delete("/monitoreos/:id", verificarToken, async (req, res) => {
 
 
 // ============================================
-// ⚙️ PERFIL DEL ADMIN
+//  PERFIL DEL ADMIN
 // ============================================
 
 // Obtener perfil del admin autenticado

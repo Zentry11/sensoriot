@@ -25,7 +25,7 @@ export default function ConfiguracionAdmin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // 🔄 Obtener perfil del admin
+  //  Obtener perfil del admin
   useEffect(() => {
     const obtenerPerfil = async () => {
       try {
@@ -41,11 +41,11 @@ export default function ConfiguracionAdmin() {
     obtenerPerfil();
   }, [API_URL, token]);
 
-  // 💾 Guardar cambios de perfil
+  //  Guardar cambios de perfil
   const guardarPerfil = async (e) => {
     e.preventDefault();
 
-    // ✅ Validaciones
+    //  Validaciones
     if (
       !admin.nombres.trim() ||
       !admin.apellidos.trim() ||
@@ -73,7 +73,7 @@ export default function ConfiguracionAdmin() {
     }
   };
 
-  // 🔐 Cambiar contraseña
+  //  Cambiar contraseña
   const cambiarContraseña = async (e) => {
     e.preventDefault();
 
@@ -107,7 +107,7 @@ export default function ConfiguracionAdmin() {
     }
   };
 
-  // 📱 Sidebar Responsive
+  //  Sidebar Responsive
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -204,7 +204,7 @@ export default function ConfiguracionAdmin() {
             {/* Datos de perfil */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                🧍 Datos Personales
+                 Datos Personales
               </h2>
               <form onSubmit={guardarPerfil} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -265,7 +265,7 @@ export default function ConfiguracionAdmin() {
             {/* Cambio de contraseña */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                🔒 Cambiar Contraseña
+                 Cambiar Contraseña
               </h2>
               <form onSubmit={cambiarContraseña} className="space-y-4">
                 <div>
