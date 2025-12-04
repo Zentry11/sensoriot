@@ -22,7 +22,26 @@ function verificarToken(req, res, next) {
 }
 
 // ============================================
-//  RUTA DE ESTADÍSTICAS (ADMIN DASHBOARD)
+//  INFORMACIÓN DEL ADMIN EN SESIÓN
+// ============================================
+router.get("/me", verificarToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, nombres, apellidos, correo, rol, fecha_registro FROM usuarios WHERE id = ?",
+      [req.usuario.id]
+    );
+
+    if (rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
+
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener usuario en sesión" });
+  }
+});
+
+// ============================================
+//  ESTADÍSTICAS PRINCIPALES (Dashboard)
 // ============================================
 router.get("/estadisticas", verificarToken, async (req, res) => {
   try {
@@ -52,7 +71,9 @@ router.get("/estadisticas", verificarToken, async (req, res) => {
 // ============================================
 router.get("/estadisticas/pulseras", verificarToken, async (req, res) => {
   try {
-    const [rows] = await pool.query("SELECT estado, COUNT(*) AS total FROM pulseras GROUP BY estado");
+    const [rows] = await pool.query(
+      "SELECT estado, COUNT(*) AS total FROM pulseras GROUP BY estado"
+    );
     res.json(rows);
   } catch (error) {
     console.error("Error al obtener estadísticas de pulseras:", error);
@@ -61,7 +82,7 @@ router.get("/estadisticas/pulseras", verificarToken, async (req, res) => {
 });
 
 // ============================================
-//  MONITOREOS POR DIA
+//  MONITOREOS RECIENTES (últimos 10 días)
 // ============================================
 router.get("/estadisticas/monitoreos", verificarToken, async (req, res) => {
   try {
@@ -80,13 +101,13 @@ router.get("/estadisticas/monitoreos", verificarToken, async (req, res) => {
 });
 
 // ============================================
-//  USUARIOS REGISTRADOS POR MES (COMPATIBLE CON ONLY_FULL_GROUP_BY)
+//  USUARIOS REGISTRADOS POR MES (FIX SQL)
 // ============================================
 router.get("/estadisticas/usuarios", verificarToken, async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        MIN(DATE_FORMAT(fecha_registro, '%b')) AS mes,
+        DATE_FORMAT(fecha_registro, '%b') AS mes,
         COUNT(*) AS total
       FROM usuarios
       GROUP BY YEAR(fecha_registro), MONTH(fecha_registro)
@@ -123,7 +144,24 @@ router.get("/estadisticas/alertas", verificarToken, async (req, res) => {
 });
 
 // ============================================
-// CRUD DE PULSERAS
+//  MONITOREOS DEL ADMIN LOGUEADO
+// ============================================
+router.get("/mis-monitoreos", verificarToken, async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT * FROM monitoreo WHERE id_usuario = ? ORDER BY fecha_registro DESC LIMIT 20`,
+      [req.usuario.id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Error al obtener monitoreos del admin:", err);
+    res.status(500).json({ error: "Error al obtener monitoreos del usuario" });
+  }
+});
+
+// ============================================
+// CRUD PULSERAS
 // ============================================
 router.get("/pulseras", verificarToken, async (req, res) => {
   try {
@@ -138,15 +176,16 @@ router.get("/pulseras", verificarToken, async (req, res) => {
 router.post("/pulseras", verificarToken, async (req, res) => {
   try {
     const { codigo, token, estado } = req.body;
-    if (!codigo || !token || !estado) {
+
+    if (!codigo || !token || !estado)
       return res.status(400).json({ error: "Faltan campos requeridos" });
-    }
 
     await pool.query(
       "INSERT INTO pulseras (codigo, token, estado) VALUES (?, ?, ?)",
       [codigo, token, estado]
     );
-    res.json({ mensaje: "✅ Pulsera registrada exitosamente" });
+
+    res.json({ mensaje: "Pulsera registrada correctamente" });
   } catch (err) {
     console.error("❌ Error al registrar pulsera:", err);
     res.status(500).json({ error: "Error al registrar pulsera" });
@@ -157,6 +196,7 @@ router.put("/pulseras/:id", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { codigo, token, estado } = req.body;
+
     const [result] = await pool.query(
       "UPDATE pulseras SET codigo=?, token=?, estado=? WHERE id=?",
       [codigo, token, estado, id]
@@ -165,7 +205,7 @@ router.put("/pulseras/:id", verificarToken, async (req, res) => {
     if (result.affectedRows === 0)
       return res.status(404).json({ error: "Pulsera no encontrada" });
 
-    res.json({ mensaje: "✅ Pulsera actualizada correctamente" });
+    res.json({ mensaje: "Pulsera actualizada correctamente" });
   } catch (err) {
     console.error("❌ Error al actualizar pulsera:", err);
     res.status(500).json({ error: "Error al actualizar pulsera" });
@@ -175,9 +215,16 @@ router.put("/pulseras/:id", verificarToken, async (req, res) => {
 router.delete("/pulseras/:id", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await pool.query("DELETE FROM pulseras WHERE id = ?", [id]);
-    if (result.affectedRows === 0) return res.status(404).json({ error: "Pulsera no encontrada" });
-    res.json({ mensaje: "🗑️ Pulsera eliminada correctamente" });
+
+    const [result] = await pool.query(
+      "DELETE FROM pulseras WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Pulsera no encontrada" });
+
+    res.json({ mensaje: "Pulsera eliminada correctamente" });
   } catch (err) {
     console.error("❌ Error al eliminar pulsera:", err);
     res.status(500).json({ error: "Error al eliminar pulsera" });
@@ -185,7 +232,7 @@ router.delete("/pulseras/:id", verificarToken, async (req, res) => {
 });
 
 // ============================================
-// CRUD DE USUARIOS
+// CRUD USUARIOS
 // ============================================
 router.get("/usuarios", verificarToken, async (req, res) => {
   try {
@@ -203,9 +250,8 @@ router.post("/usuarios", verificarToken, async (req, res) => {
   try {
     const { nombres, apellidos, telefono, correo, rol, contraseña } = req.body;
 
-    if (!nombres || !apellidos || !telefono || !correo || !rol || !contraseña) {
+    if (!nombres || !apellidos || !telefono || !correo || !rol || !contraseña)
       return res.status(400).json({ mensaje: "Faltan datos obligatorios" });
-    }
 
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
@@ -214,7 +260,7 @@ router.post("/usuarios", verificarToken, async (req, res) => {
       [nombres, apellidos, telefono, correo, hashedPassword, rol]
     );
 
-    res.json({ mensaje: "✅ Usuario registrado correctamente" });
+    res.json({ mensaje: "Usuario registrado correctamente" });
   } catch (error) {
     console.error("❌ Error al registrar usuario:", error);
     res.status(500).json({ mensaje: "Error al registrar usuario" });
@@ -231,7 +277,7 @@ router.put("/usuarios/:id", verificarToken, async (req, res) => {
       [nombres, apellidos, telefono, correo, rol, id]
     );
 
-    res.json({ mensaje: "✅ Usuario actualizado correctamente" });
+    res.json({ mensaje: "Usuario actualizado correctamente" });
   } catch (error) {
     console.error("❌ Error al actualizar usuario:", error);
     res.status(500).json({ mensaje: "Error al actualizar usuario" });
@@ -241,8 +287,10 @@ router.put("/usuarios/:id", verificarToken, async (req, res) => {
 router.delete("/usuarios/:id", verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
+
     await pool.query("DELETE FROM usuarios WHERE id = ?", [id]);
-    res.json({ mensaje: "🗑️ Usuario eliminado correctamente" });
+
+    res.json({ mensaje: "Usuario eliminado correctamente" });
   } catch (error) {
     console.error("❌ Error al eliminar usuario:", error);
     res.status(500).json({ mensaje: "Error al eliminar usuario" });
