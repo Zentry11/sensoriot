@@ -88,10 +88,10 @@ router.get("/estadisticas/usuarios", verificarToken, async (req, res) => {
       SELECT 
         YEAR(fecha_registro) AS anio,
         MONTH(fecha_registro) AS mes_num,
-        DATE_FORMAT(fecha_registro, '%b') AS mes,
+        DATE_FORMAT(MIN(fecha_registro), '%b') AS mes,
         COUNT(*) AS total
       FROM usuarios
-      GROUP BY anio, mes_num
+      GROUP BY YEAR(fecha_registro), MONTH(fecha_registro)
       ORDER BY anio, mes_num
     `);
     res.json(rows);
